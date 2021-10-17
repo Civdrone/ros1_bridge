@@ -278,7 +278,7 @@ public:
       }
       RCLCPP_WARN(logger, "Waiting for ROS 2 service %s...", cli->get_service_name());
     }
-    auto timeout = std::chrono::seconds(5);
+    auto timeout = std::chrono::seconds(20);
     auto future = client->async_send_request(request2);
     auto status = future.wait_for(timeout);
     if (status == std::future_status::ready) {
