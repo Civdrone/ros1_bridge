@@ -485,8 +485,13 @@ int main(int argc, char * argv[])
   ros::NodeHandle ros1_node;
   std::unique_ptr<ros::CallbackQueue> ros1_callback_queue = nullptr;
   if (multi_threads) {
+    printf("Running in Multithreaded mode\n");
     ros1_callback_queue = std::make_unique<ros::CallbackQueue>();
     ros1_node.setCallbackQueue(ros1_callback_queue.get());
+  }
+  else
+  {
+    printf("Running in Singlethreaded mode\n");
   }
 
 
@@ -729,7 +734,7 @@ int main(int argc, char * argv[])
           continue;
         }
         std::map<std::string, std::vector<std::string>> services_and_types =
-          ros2_node->get_service_names_and_types_by_node(pair.first, pair.second);
+          ros2_node->get_service_names_and_types();
         for (auto & it : services_and_types) {
           service_names.insert(it.first);
         }
@@ -824,7 +829,7 @@ int main(int argc, char * argv[])
   async_spinner->start();
 
   // ROS 2 spinning loop
-  std::unique_ptr<rclcpp::Executor> executor = nullptr;
+  std::unique_ptr<rclcpp::executor::Executor> executor = nullptr;
   if (!multi_threads) {
     executor = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
   } else {

@@ -34,14 +34,14 @@
 namespace ros1_bridge
 {
 
-static rclcpp::CallbackGroup::SharedPtr get_callback_group(
+static rclcpp::callback_group::CallbackGroup::SharedPtr get_callback_group(
   rclcpp::Node::SharedPtr ros2_node,
   const std::string & topic_name = "")
 {
   auto node_base = ros2_node->get_node_base_interface();
-  rclcpp::CallbackGroup::SharedPtr group = nullptr;
+  rclcpp::callback_group::CallbackGroup::SharedPtr group = nullptr;
 
-  typedef std::map<std::string, rclcpp::CallbackGroup::SharedPtr> CallbackGroupMap;
+  typedef std::map<std::string, rclcpp::callback_group::CallbackGroup::SharedPtr> CallbackGroupMap;
   static CallbackGroupMap s_callbackgroups;
   auto iter = s_callbackgroups.find(topic_name);
   if (iter != s_callbackgroups.end()) {
@@ -51,10 +51,10 @@ static rclcpp::CallbackGroup::SharedPtr get_callback_group(
   group = ros2_node->create_callback_group(
     topic_name.empty() ?
     // create a shared callback group with Reentrant for creating all ros2 clients and services
-    rclcpp::CallbackGroupType::Reentrant :
+    rclcpp::callback_group::CallbackGroupType::Reentrant :
     // create one CallbackGroup with MutuallyExclusive for each topic
     // to ensure that the message data of each topic is received in order
-    rclcpp::CallbackGroupType::MutuallyExclusive);
+    rclcpp::callback_group::CallbackGroupType::MutuallyExclusive);
   s_callbackgroups.insert({topic_name, group});
 
   return group;
@@ -170,7 +170,7 @@ public:
     bool custom_callback_group = false)
   {
     std::function<
-      void(const typename ROS2_T::SharedPtr msg, const rclcpp::MessageInfo & msg_info)> callback;
+      void(const typename ROS2_T::SharedPtr msg, const rmw_message_info_t & msg_info)> callback;
     callback = std::bind(
       &Factory<ROS1_T, ROS2_T>::ros2_callback, std::placeholders::_1, std::placeholders::_2,
       ros1_pub, ros1_type_name_, ros2_type_name_, node->get_logger(), ros2_pub);
@@ -244,7 +244,7 @@ protected:
   static
   void ros2_callback(
     typename ROS2_T::SharedPtr ros2_msg,
-    const rclcpp::MessageInfo & msg_info,
+    const rmw_message_info_t & msg_info,
     ros::Publisher ros1_pub,
     const std::string & ros1_type_name,
     const std::string & ros2_type_name,
@@ -254,7 +254,7 @@ protected:
     if (ros2_pub) {
       bool result = false;
       auto ret = rmw_compare_gids_equal(
-        &msg_info.get_rmw_message_info().publisher_gid,
+        &msg_info.publisher_gid,
         &ros2_pub->get_gid(),
         &result);
       if (ret == RMW_RET_OK) {
@@ -363,7 +363,7 @@ public:
     bool custom_callback_group = false)
   {
     ServiceBridge1to2 bridge;
-    rclcpp::CallbackGroup::SharedPtr group = nullptr;
+    rclcpp::callback_group::CallbackGroup::SharedPtr group = nullptr;
     if (custom_callback_group) {
       group = ros1_bridge::get_callback_group(ros2_node);
     }
@@ -392,7 +392,7 @@ public:
     f = std::bind(
       m, this, bridge.client, ros2_node->get_logger(), std::placeholders::_1,
       std::placeholders::_2, std::placeholders::_3);
-    rclcpp::CallbackGroup::SharedPtr group = nullptr;
+    rclcpp::callback_group::CallbackGroup::SharedPtr group = nullptr;
     if (custom_callback_group) {
       group = ros1_bridge::get_callback_group(ros2_node);
     }
